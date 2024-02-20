@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Singapore's Pollutant Standards Index (PSI) Today - Shawn Ng</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Demonstration of Pollutant Standards Index data extraction from an API, using Vue.js and Axios">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <link href="style.css" rel="stylesheet">
+  <script type="text/javascript" charset="utf8" src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script type="text/javascript" charset="utf8" src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <style>
+    body {
+      background-color: #f0f8ff; /* light blue */
+      position: relative; /* make the body a positioned parent for absolute positioning of clouds */
+      overflow-x: hidden; /* hide horizontal scrollbar */
+    }
+    .status {
+      color: #00008b; /* dark blue */
+      text-align: center;
+      font-size: 1em; /* Adjust font size to slightly larger */
+    }
+    .cloud {
+      position: absolute;
+      background-color: #e0e0e0; /* greyish color */
+      border-radius: 50%; /* Create a circular shape */
+      z-index: -1; /* Ensure clouds are behind content */
+    }
+    .top-clouds {
+      top: 0; /* Position clouds at the top of the page */
+      width: 80px; /* Adjust the width of the clouds */
+      height: 50px; /* Adjust the height of the clouds */
+      animation: moveTopClouds 10s linear infinite; /* Animate the top clouds */
+    }
+    .bottom-clouds {
+      bottom: 0; /* Position clouds at the bottom of the page */
+      width: 100px; /* Adjust the width of the clouds */
+      height: 60px; /* Adjust the height of the clouds */
+      animation: moveBottomClouds 8s linear infinite; /* Animate the bottom clouds */
+    }
+    @keyframes moveTopClouds {
+      from {
+        left: -20%;
+      }
+      to {
+        left: 110%;
+      }
+    }
+    @keyframes moveBottomClouds {
+      from {
+        right: -20%;
+      }
+      to {
+        right: 110%;
+      }
+    }
+    /* Highlight table row on hover */
+    tr:hover {
+      background-color: rgba(0, 0, 0, 0.1); /* Light grey */
+    }
+    /* Blue row at the bottom */
+    .blue-row {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px; /* Adjust the height of the blue row */
+      background-color: #00008b; /* Dark blue */
+    }
+    /* Tree trunk */
+    .tree-trunk {
+      position: absolute;
+      bottom: 0;
+      width: 20px; /* Adjust the width of the trunk */
+      height: 60px; /* Adjust the height of the trunk */
+      background-color: #8B4513; /* Brown */
+    }
+    /* Tree leaves */
+    .tree-leaves {
+      position: absolute;
+      bottom: 60px; /* Adjust the bottom position to connect with the trunk */
+      width: 100px; /* Adjust the width of the leaves */
+      height: 100px; /* Adjust the height of the leaves */
+      background-color: #008000; /* Green */
+      border-radius: 50%; /* Rounded shape */
+      animation: shakeLeaves 9s linear infinite; /* Shake leaves animation */
+      transform-origin: 50% 100%; /* Set the transform origin to bottom center */
+    }
+
+    @keyframes shakeLeaves {
+      0%, 100% { transform: rotate(0deg); }
+      10%, 90% { transform: rotate(5deg); }
+      20%, 80% { transform: rotate(-5deg); }
+      30%, 50%, 70% { transform: rotate(3deg); }
+      40%, 60% { transform: rotate(-3deg); }
+    }
+
+    /* Left tree position */
+    .left-tree {
+      left: 10%; /* Adjust the left position of the tree */
+    }
+    /* Right tree position */
+    .right-tree {
+      right: 10%; /* Adjust the right position of the tree */
+    }
+    /* Second left tree position */
+    .second-left-tree {
+      left: 30%; /* Adjust the left position of the tree */
+    }
+    /* Second right tree position */
+    .second-right-tree {
+      right: 30%; /* Adjust the right position of the tree */
+    }
+
+    /* Tooltip styling */
+    .table th {
+      position: relative;
+      cursor: help; /* Change cursor to indicate tooltip */
+    }
+    .table th::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px; /* Adjust the font size */
+      display: none;
+      bottom: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      z-index: 999;
+    }
+    .table th:hover::after {
+      display: block;
+    }
+    .bird {
+      position: absolute;
+      width: 20px; /* Adjust the width of the bird */
+      height: 20px; /* Adjust the height of the bird */
+      border-radius: 50%; /* Make the bird a circle */
+      background-color: black; /* Set the color of the bird to black */
+      animation: flyAway 10s linear infinite; /* Animate the bird flying away */
+    }
+    @keyframes flyAway {
+      0% {
+        opacity: 1; /* Start with full opacity */
+        transform: translateY(0) scale(1); /* Start at original size and position */
+      }
+      100% {
+        opacity: 0; /* Fade out */
+        transform: translateY(-500px) scale(0.2); /* Move up and shrink */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top clouds -->
+  <div class="cloud top-clouds"></div>
+  <div class="cloud top-clouds"></div>
+  <div class="cloud top-clouds"></div>
+  <!-- Bottom clouds -->
+  <div class="cloud bottom-clouds"></div>
+  <div class="cloud bottom-clouds"></div>
+  <div class="cloud bottom-clouds"></div>
+
+  <div class="container d-flex justify-content-center d-flex align-items-center">
+    <div class="row">
+
+      <header class="text-center col-12">
+        <div class="buffer col-12"></div>
+        <h1 style="color:#00008b;">Pollutant Standards Index (PSI) Singapore</h1>
+
+        <div class="table" id="app" style="overflow-x:auto;">
+          <table id="datatable" class="table">
+            <div v-for="(result, index) in results['items']" :key="index">
+              <h2 class="status">
+                <!--PSI Status-->
+                PSI Status: <span>{{results['api_info']['status'].toUpperCase()}}</span><br>
+
+                <!-- Timestamp -->
+                Last updated: {{new Date(result['timestamp']).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric'
+                })}}
+              </h2>
+            </div>
+      </header>
+      <!--Air quality readings-->
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>North</th>
+          <th>South</th>
+          <th>East</th>
+          <th>West</th>
+          <th>Central</th>
+          <th data-tooltip="Ave of N,S,E,W,C ">National</th> <!-- New column for National -->
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr v-for="(metric, index) in sortedMetrics" :key="index">
+          <td v-text="renameMetric(metric)" style="font-weight:bold"></td>
+          <td v-text="results['items'][0]['readings'][metric]['north']"></td>
+          <td v-text="results['items'][0]['readings'][metric]['south']"></td>
+          <td v-text="results['items'][0]['readings'][metric]['east']"></td>
+          <td v-text="results['items'][0]['readings'][metric]['west']"></td>
+          <td v-text="results['items'][0]['readings'][metric]['central']"></td>
+          <td>{{ calculateNational(metric) }}</td> <!-- Calculate National value -->
+        </tr>
+      </tbody>
+      </table>
+
+    </div>
+    <div class="footer">
+      <button class="btn btn-primary"><a href="https://www.haze.gov.sg/" target="_blank" style="color:white; text-decoration:none;">Haze Info</a></button>
+      <button class="btn btn-primary"><a href="https://api.data.gov.sg/v1/environment/psi" target="_blank" style="color:white; text-decoration:none;">API Source</a></button>
+      <button class="btn btn-primary"><a href="https://beta.data.gov.sg/datasets?query=PSI" target="_blank" style="color:white; text-decoration:none;">About Dataset</a></button>
+      <button class="btn btn-primary"><a href="https://github.com/snks86" target="_blank" style="color:white; text-decoration:none;">Shawn Ng</a></button>
+    </div>
+
+  </div>
+
+  </div>
+  
+  <!-- Blue row at the bottom -->
+  <div class="blue-row">
+    <!-- Left tree -->
+    <div class="tree-trunk left-tree"></div>
+    <div class="tree-leaves left-tree"></div>
+    <!-- Second left tree -->
+    <div class="tree-trunk second-left-tree"></div>
+    <div class="tree-leaves second-left-tree"></div>
+    <!-- Second right tree -->
+    <div class="tree-trunk second-right-tree"></div>
+    <div class="tree-leaves second-right-tree"></div>
+    <!-- Right tree -->
+    <div class="tree-trunk right-tree"></div>
+    <div class="tree-leaves right-tree"></div>
+
+    <!-- Birds -->
+    <div class="bird" style="left: 10%; animation-duration: 10s;"></div>
+    <div class="bird" style="left: 20%; animation-duration: 12s;"></div>
+    <div class="bird" style="left: 30%; animation-duration: 14s;"></div>
+    <div class="bird" style="right: 10%; animation-duration: 16s;"></div>
+    <div class="bird" style="right: 20%; animation-duration: 18s;"></div>
+    <div class="bird" style="right: 30%; animation-duration: 20s;"></div>
+  </div>
+
+  <script>
+    var app = new Vue({ // create a new instance of Vue framework
+      el: "#app", // specify that the root element of the Vue app is an ID element of "app"
+      data: {
+        results: [] //  define that the data used is called "results", which is an empty array.
+      },
+      computed: {
+        sortedMetrics: function () { //  defines a computed function/property named "sortedMetrics"
+          return Object.keys(this.results['items'][0]['readings']).filter(metric => metric !== 'national').sort(); // sortedMetrics sorts the keys of the object in this.results['items'][0]['readings'].
+        }
+      },
+      created: function () { // lifecycle hook in Vue, which is called after the application is created .
+        axios
+          .get("https://api.data.gov.sg/v1/environment/psi") //this line makes a GET request using the Axios library to the specified URL/API endpoint.
+          .then(response => {
+            this.results = response.data; // The API response is then passed to the 'then' callback function, which is stored in the "results" array.
+          });
+      },
+      methods: {
+        renameMetric: function(metric) {
+          switch(metric) {
+            case 'co_eight_hour_max':
+              return 'CO 8hr Max';
+            case 'co_sub_index':
+              return 'CO Sub Index';
+            case 'no2_one_hour_max':
+              return 'NO2 1hr Max';
+            case 'o3_eight_hour_max':
+              return 'O3 8hr Max';
+            case 'o3_sub_index':
+              return 'O3 Sub Index';
+            case 'pm10_sub_index':
+              return 'PM10 Sub Index';
+            case 'pm10_twenty_four_hourly':
+              return 'PM10 24hourly';
+            case 'pm25_sub_index':
+              return 'PM25 Sub Index';
+            case 'pm25_twenty_four_hourly':
+              return 'PM25 24hourly';
+            case 'psi_twenty_four_hourly':
+              return 'PSI 24hourly';
+            case 'so2_sub_index':
+              return 'SO2 Sub Index';
+            case 'so2_twenty_four_hourly':
+              return 'SO2 24hourly';
+            default:
+              return metric;
+          }
+        },
+        calculateNational: function(metric) {
+          // Calculate the average value for the National column
+          let sum = 0;
+          sum += parseInt(this.results['items'][0]['readings'][metric]['north']);
+          sum += parseInt(this.results['items'][0]['readings'][metric]['south']);
+          sum += parseInt(this.results['items'][0]['readings'][metric]['east']);
+          sum += parseInt(this.results['items'][0]['readings'][metric]['west']);
+          sum += parseInt(this.results['items'][0]['readings'][metric]['central']);
+          return Math.round(sum / 5); // Return the rounded average
+        }
+      }
+    });
+
+    // Tree shaking animation
+    const trees = document.querySelectorAll('.tree-leaves');
+    setInterval(() => {
+      trees.forEach(tree => {
+        tree.classList.toggle('shake');
+      });
+    }, 3000); // Adjust the interval here (in milliseconds)
+  </script>
+
+</body>
+
+</html>
